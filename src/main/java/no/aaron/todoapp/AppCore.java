@@ -26,6 +26,10 @@ public class AppCore {
 
     @PutMapping("/categories/{id}")
     public Category updateCategory(@RequestBody Category category, @PathVariable Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new CategoryNotFoundException(id);
+        }
+
         category.setId(id);
         return categoryRepository.save(category);
     }
@@ -35,7 +39,7 @@ public class AppCore {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException(id));
 
         for (Task task : taskRepository.findByMappedCategories(category)) {
-            removeTaskCategory(task.getId(), id);
+            removeCategory(task, category);
         }
 
         categoryRepository.deleteById(id);
@@ -78,6 +82,10 @@ public class AppCore {
         Task task = taskRepository.findById(taskid).orElseThrow(() -> new TaskNotFoundException(taskid));
         Category category = categoryRepository.findById(categoryid).orElseThrow(() -> new CategoryNotFoundException(categoryid));
 
+        removeCategory(task, category);
+    }
+
+    private void removeCategory(Task task, Category category) {
         task.removeCategory(category);
         taskRepository.save(task);
     }
